@@ -1,10 +1,20 @@
 import gulp from "gulp";
 import del from "del";
+
+// SCSS
 import sass from "gulp-sass";
 import minify from "gulp-csso";
 import autoprefixer from "gulp-autoprefixer";
-import ws from "gulp-webserver";
+
+// pug
 import gpug from "gulp-pug";
+import babel from "gulp-babel";
+
+// js
+import uglify from "gulp-uglify";
+
+// live
+import ws from "gulp-webserver";
 import ghPages from "gulp-gh-pages";
 
 sass.compiler = require("node-sass");
@@ -19,6 +29,11 @@ const routes = {
     watch: "src/scss/**/*.scss",
     src: "src/scss/styles.scss",
     dest: "dist/css",
+  },
+  js: {
+    watch: "src/img.js",
+    src: "src/img.js",
+    dest: "dist",
   },
   reset: {
     src: "src/reset.css",
@@ -47,20 +62,28 @@ const reset = () =>
 const pug = () =>
   gulp.src(routes.pug.src).pipe(gpug()).pipe(gulp.dest(routes.pug.dest));
 
+const js = () =>
+  gulp
+    .src(routes.js.src)
+    .pipe(babel())
+    .pipe(uglify())
+    .pipe(gulp.dest(routes.js.dest));
+
 const watch = () => {
   gulp.watch(routes.css.watch, styles);
   gulp.watch(routes.pug.watch, pug);
+  gulp.watch(routes.js.watch, js);
 };
 
 const webserver = () => gulp.src("dist").pipe(ws({ livereload: true }));
 
-const clean = () => del(["dist/styles.css", "dist/index.html"]);
+const clean = () => del(["dist/styles.css", "dist/index.html", "dist/img.js"]);
 
 // build delete for preventing conflict
 const prepare = gulp.series([clean]);
 
 // pug transcompile
-const assets = gulp.series([reset, styles, pug]);
+const assets = gulp.series([reset, styles, pug, js]);
 
 // excute webserver
 const live = gulp.parallel([webserver, watch]);
